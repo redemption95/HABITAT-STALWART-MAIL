@@ -1,0 +1,26 @@
+# Habitat mail: Stalwart (SMTP, IMAP, spam filter, DKIM, web admin) for habitat.org.in.
+# Runs on the Habitat VPS next to the app, as its own Compose project. See README.md.
+name: habitat-mail
+services:
+  stalwart:
+    image: stalwartlabs/stalwart:v1.0.0
+    restart: always
+    hostname: mail.habitat.org.in
+    ports:
+      - '25:25'     # receiving mail from other servers
+      - '465:465'   # sending from your phone/apps (implicit TLS)
+      - '587:587'   # sending from your phone/apps (STARTTLS)
+      - '993:993'   # reading mail (IMAP over TLS)
+      # Web admin: only on the server itself. Reach it with an SSH tunnel (README "Admin").
+      - '127.0.0.1:8080:8080'
+    volumes:
+      - config:/etc/stalwart
+      - data:/var/lib/stalwart
+    mem_limit: 384m
+    logging:
+      driver: json-file
+      options: { max-size: '20m', max-file: '5' }
+
+volumes:
+  config:
+  data:
