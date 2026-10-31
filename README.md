@@ -13,7 +13,7 @@ phones and apps (SMTP submission), reading (IMAP), spam filtering, DKIM signing 
 ```
 Internet ──25──▶ ┐
 Phone ──465/587/993──▶ Stalwart (container) ── volumes: config, data
-You ──SSH tunnel──▶ 127.0.0.1:8080 (web admin, never public)
+You ──SSH tunnel──▶ 127.0.0.1:8443 (web admin, never public)
 ```
 
 ## 1. Install (once, on the VPS)
@@ -28,20 +28,43 @@ schedules the 03:00 IST backup. Running it again is safe.
 
 ## 2. Admin access
 
-The admin page only listens on the server itself. From your Mac, open a tunnel (asks for the root password) and
-leave it running:
+The admin page only listens on the server itself, and Stalwart 1.0 only accepts sign-in at its own HTTPS hostname
+(anything else says "Unknown client id"). So the browser has to reach `mail.habitat.org.in` through a tunnel.
+
+**Normal access** (after the TLS certificate in section 3 is issued):
+
+1. Once, on your Mac, point the hostname at the tunnel: `echo '127.0.0.1 mail.habitat.org.in' | sudo tee -a /etc/hosts`.
+   Remove that line if you ever need to reach the real server by name from the Mac (e.g. the port checks in
+   section 6, or a mail app on the Mac).
+2. Open a tunnel and leave it running. It must use local port 443 (hence `sudo`, which asks for your Mac
+   password, then the root password): sign-in redirects to `https://mail.habitat.org.in/login` with no port.
+
+   ```bash
+   sudo ssh -N -L 443:127.0.0.1:8443 root@<vps-ip>
+   ```
+3. Open **https://mail.habitat.org.in/admin**.
+
+**Recovery mode** (first setup, before there is a certificate, or when locked out). On the server:
 
 ```bash
-ssh -N -L 8080:127.0.0.1:8080 root@<vps-ip>
+umask 077; printf 'STALWART_RECOVERY_MODE=1\nSTALWART_RECOVERY_ADMIN=admin:%s\n' "$(openssl rand -hex 16)" \
+  > /opt/habitat-mail/stalwart.env
+cat /opt/habitat-mail/stalwart.env          # note the password
+docker compose -f /opt/habitat-mail/compose.yml up -d
 ```
 
-Then open **http://localhost:8080**. The first sign-in password is in the logs:
+Tunnel with `ssh -N -L 8080:127.0.0.1:8080 root@<vps-ip>` and open **http://localhost:8080/admin**. Mail may not
+be served in recovery mode, so leave it as soon as you're done:
+
+```bash
+rm /opt/habitat-mail/stalwart.env && docker compose -f /opt/habitat-mail/compose.yml up -d
+```
+
+On a brand-new install, the first password for the setup wizard is in the logs:
 
 ```bash
 docker compose -f /opt/habitat-mail/compose.yml logs stalwart | grep -i -A2 password
 ```
-
-Sign in as `admin`, and **change the password straight away** (turn on two-factor sign-in if offered).
 
 ## 3. Configure (in the web admin)
 
@@ -63,6 +86,8 @@ Menu names may differ slightly in Stalwart 1.0. Look for these settings:
 5. Check that **automatic banning** of repeated failed logins is on (Stalwart does this itself; no fail2ban needed).
 
 ## 4. DNS (Cloudflare, all **DNS only / grey cloud**: mail can't go through Cloudflare's proxy)
+
+Every record explained, including the ones Stalwart creates automatically and which to delete: [DNS.md](DNS.md).
 
 | Type | Name | Content | Notes |
 |---|---|---|---|

@@ -12,7 +12,13 @@ services:
       - '587:587'   # sending from your phone/apps (STARTTLS)
       - '993:993'   # reading mail (IMAP over TLS)
       # Web admin: only on the server itself. Reach it with an SSH tunnel (README "Admin").
+      # 8443 (HTTPS) is the normal way in; 8080 (plain HTTP) only works in recovery mode.
+      - '127.0.0.1:8443:443'
       - '127.0.0.1:8080:8080'
+    # Optional, root-only. Holds STALWART_RECOVERY_* while recovery mode is needed (README "Admin").
+    env_file:
+      - path: stalwart.env
+        required: false
     volumes:
       - config:/etc/stalwart
       - data:/var/lib/stalwart
