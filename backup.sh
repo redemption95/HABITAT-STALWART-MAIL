@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Nightly mail backup: pauses Stalwart for a few seconds (a consistent copy, like a power cut it
-# recovers from), archives its config and data, encrypts, copies to Cloudflare R2, keeps 14 days here.
+# recovers from), archives its config and data, encrypts, copies to Cloudflare R2, keeps 5 days here.
 # Senders retry automatically, so nothing is lost during the pause.
 set -euo pipefail
 ROOT=/opt/habitat-mail
@@ -28,4 +28,4 @@ if [ -n "${R2_ACCESS_KEY_ID:-}" ]; then
 else
   echo "!! R2 keys not set in $ROOT/backup.env: backup kept on this server only" >&2
 fi
-find "$OUT" -name 'mail-*.tar.gz.gpg' -mtime +14 -delete
+find "$OUT" -name 'mail-*.tar.gz.gpg' -mtime +5 -delete

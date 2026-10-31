@@ -129,7 +129,7 @@ Every record explained, including the ones Stalwart creates automatically and wh
 
 - **Schedule:** nightly at 03:00 IST.
 - **How:** Stalwart is paused for a few seconds (senders retry, nothing is lost), its config and data are
-  archived and encrypted, then copied to `r2:habitat-backups/mail/`. 14 days are kept on the server.
+  archived and encrypted, then copied to `r2:habitat-backups/mail/`. 5 days are kept on the server (for a quick restore without downloading); R2 keeps 30.
 - **Setup:** fill `/opt/habitat-mail/backup.env` with the R2 keys, and keep `BACKUP_PASSPHRASE` in your password
   manager. Without the passphrase, the backups can't be opened.
 - **Run now:** `/opt/habitat-mail/backup.sh`
